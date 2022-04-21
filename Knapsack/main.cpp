@@ -24,7 +24,7 @@ int get_number(char *&p) {
 }
 
 int main() {
-	FILE *fp = fopen("./data/ks_19_0", "r");
+	FILE *fp = fopen("./data/ks_1000_0", "r");
 	fread(ibuff, 1, insz, fp);
 	char *ip = ibuff;
 	int n = get_number(ip);
@@ -41,6 +41,7 @@ int main() {
 		w[i] = t;
 	}
 
+	/*
 	cout << "n = " << n << ' ' << "K = " << K << endl;
 	cout << "v = [";
 	for (int i: v)
@@ -50,31 +51,67 @@ int main() {
 	for (int i: w)
 	    cout << i << ' ';
 	cout << "]\n";
+	*/
+
+	vector<vector<int> > V(n, vector<int> (K+1, 0));
+
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j <= K; ++j) {
+			if (w[i]<=j) {
+				if(i>0)
+					V[i][j] = max(V[i-1][j],V[i-1][j-w[i]]+v[i]);
+				else
+					V[i][j] = v[i];
+			}
+			else {
+				if(i>0)
+					V[i][j] = V[i-1][j];
+			}
+		}
+	}
+
+	/*
+	for(int i = 0; i < n; ++i) {
+		for (int j = 0; j <= K; ++j) {
+			cout << V[i][j] << ' ';
+		}
+		cout << endl;
+	}
+	*/
+
+
+	vector<int> solution;
+
+	int x, y;
+	x = n-1; y = K;
+	while (V[x][y]) {
+		if (V[x][y] == V[x-1][y]) {
+			x = x-1;
+		}
+		else if (V[x][y] == v[x] + V[x-1][y-w[x]]) {
+			solution.push_back(x);
+			y = y-w[x];
+			x = x-1;
+		}
+		else
+			cout << "error\n";
+	}
+
+	reverse(solution.begin(), solution.end());
+
+	cout << "Indexes: ";
+
+	int vsum = 0, wsum = 0;
+	for (int i: solution) {
+		cout << i << ' ';
+		vsum += v[i];
+		wsum += w[i];
+	}
+	cout << endl;
+	cout << "Total value: " << vsum << endl;
+	cout << "Weight remainder: " << K - wsum << endl;
 
 	fclose(fp);
 	return 0;
 }
-
-/*
-19 31181
-1945 4990
-321 1142
-2945 7390
-4136 10372
-1107 3114
-1022 2744
-1101 3102
-2890 7280
-962 2624
-1060 3020
-805 2310
-689 2078
-1513 3926
-3878 9656
-13504 32708
-1865 4830
-667 2034
-1833 4766
-16553 40006
- */
 
