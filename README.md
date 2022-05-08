@@ -1,5 +1,8 @@
 # tasks_4semester
 
+KNAPSACK:
+- complete
+
 TSP:
 - Tried genetic algorithm. Results aren't horrible, but aren't within 20% margin. This is bad. Need to try a new approach...
 - also input varies from normal and scientific notation, so need to figure out how to better read input data
