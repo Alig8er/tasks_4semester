@@ -4,7 +4,7 @@
 #include <string>
 #include <ctime>
 
-#define POP_SIZE 100
+#define POP_SIZE 20
 
 using namespace std;
 const int maxN = 1e5;
@@ -117,40 +117,9 @@ Offspring crossover(vector<int> p1, vector<int> p2, int n) {
 	c2 = p2;
 	c1 = p1;
 
-	int r1 = rand() % (n - 4) + 1;
-	int r2 = rand() % (n - 4) + 1;
+	int i = 0;
 
-	for (int i = r1 + 3, j = 0;
-			(r1 + 3 + j) % n != r1 && (r1 + 3 + j) % n != r1 + 1;) {
-		if (i != 0 && p1[i] != p2[r1] && p1[i] != p2[r1 + 1]
-				&& p1[i] != p2[r1 + 2]) {
-			if ((r1 + 3 + j) % n) {
-				c2[(r1 + 3 + j) % n] = p1[i];
-				++j;
-			} else {
-				++j;
-				c2[(r1 + 3 + j) % n] = p1[i];
-				++j;
-			}
-		}
-		i = (i + 1) % n;
-	}
 
-	for (int i = r2 + 3, j = 0;
-			(r2 + 3 + j) % n != r2 && (r1 + 3 + j) % n != r1 + 1;) {
-		if (i != 0 && p2[i] != p1[r2] && p2[i] != p1[r2 + 1]
-				&& p2[i] != p1[r2 + 2]) {
-			if ((r2 + 3 + j) % n) {
-				c1[(r2 + 3 + j) % n] = p2[i];
-				++j;
-			} else {
-				++j;
-				c1[(r2 + 3 + j) % n] = p2[i];
-				++j;
-			}
-		}
-		i = (i + 1) % n;
-	}
 
 	c.c2 = c2;
 	c.c1 = c1;
@@ -160,7 +129,7 @@ Offspring crossover(vector<int> p1, vector<int> p2, int n) {
 
 individual solve(vector<vector<double>> &map, int n) {
 	int gen = 1;
-	int thres = 500;
+	int thres = 2000;
 
 	vector<individual> pop;
 	individual temp;
@@ -177,7 +146,8 @@ individual solve(vector<vector<double>> &map, int n) {
 
 		sort(pop.begin(), pop.end(), lessthan);
 
-		for (int i = 0; i < 5; ++i) {
+		/*
+		for (int i = 0; i < 10; ++i) {
 			Offspring c;
 			int r1 = rand() % POP_SIZE;
 			int r2 = rand() % POP_SIZE;
@@ -185,11 +155,21 @@ individual solve(vector<vector<double>> &map, int n) {
 				r2 = rand() % POP_SIZE;
 			}
 			c = crossover(pop[r1].gene, pop[r2].gene, n);
-			pop[r1].gene = c.c1;
-			pop[r1].fitness = find_fitness(c.c1, map);
-			pop[r2].gene = c.c2;
-			pop[r2].fitness = find_fitness(c.c2, map);
+			individual new_gene;
+			new_gene.gene = c.c1;
+			new_gene.fitness = find_fitness(c.c1, map);
+			if (new_gene.fitness <= pop[r1].fitness){
+				pop[r1]= new_gene;
+			}
+
+			new_gene.gene = c.c2;
+			new_gene.fitness = find_fitness(c.c2, map);
+			if (new_gene.fitness <= pop[r2].fitness){
+				pop[r2]= new_gene;
+			}
 		}
+		*/
+
 
 		for (int i = 0; i < POP_SIZE; i++) {
 			individual p1 = pop[i];
@@ -198,7 +178,7 @@ individual solve(vector<vector<double>> &map, int n) {
 			while (true) {
 
 				vector<int> new_g;
-				new_g = mutate_gene(p1.gene, n); ///////////// crossing????????
+				new_g = mutate_gene(p1.gene, n);
 				individual new_gene;
 				new_gene.gene = new_g;
 				new_gene.fitness = find_fitness(new_gene.gene, map);
@@ -206,13 +186,14 @@ individual solve(vector<vector<double>> &map, int n) {
 				if (new_gene.fitness <= pop[i].fitness) {
 					pop[i] = new_gene;
 					break;
-				} else if (cnt > 40) {
+				} else if (cnt > 100) {
 					break;
 				}
 				++cnt;
 				//cout << "FAIL: " << cnt << ", i = " << i << endl;
 			}
 		}
+
 		gen++;
 	}
 
@@ -223,7 +204,7 @@ individual solve(vector<vector<double>> &map, int n) {
 }
 
 int main() {
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	FILE *fp = fopen("./tsp_data/tsp_100_1", "r"); //normal input will work until 399, after 400 scientific notation
 	fread(ibuff, 1, insz, fp);
@@ -244,7 +225,9 @@ int main() {
 	cout << "Calculating distances...\n";
 	vector<vector<double>> map(n, vector<double>(n, 0)); //contains SQUARED distances
 	for (int i = 0; i < n; ++i) {
-		cout << "Row: " << i << endl;
+		if (!(i % 100))
+			cout << "Row: " << i << endl;
+
 		for (int j = i + 1; j < n; ++j) {
 			map[i][j] = map[j][i] = pow(x[i] - x[j], 2) + pow(y[i] - y[j], 2);
 		}
