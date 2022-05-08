@@ -56,7 +56,6 @@ bool operator>(const individual &c1, const individual &c2) {
 	return c1.fitness > c2.fitness;
 }
 
-
 bool repeat(vector<int> a, int x) {
 	for (int i = 0; i < a.size(); i++) {
 		if (a[i] == x)
@@ -80,7 +79,7 @@ vector<int> generate_gene(int n) {
 
 vector<int> mutate_gene(vector<int> gene, int n) {
 	int cnt = 0;
-	while (cnt<1) {
+	while (cnt < 1) {
 		int r = rand() % (n - 1) + 1;
 		int r1 = rand() % (n - 1) + 1;
 		if (r1 != r) {
@@ -108,9 +107,60 @@ double find_fitness(vector<int> gene, vector<vector<double>> &map) ///???????
 	return f;
 }
 
+struct Offspring {
+	vector<int> c1, c2;
+};
+
+Offspring crossover(vector<int> p1, vector<int> p2, int n) {
+	vector<int> c1, c2;
+	Offspring c;
+	c2 = p2;
+	c1 = p1;
+
+	int r1 = rand() % (n - 4) + 1;
+	int r2 = rand() % (n - 4) + 1;
+
+	for (int i = r1 + 3, j = 0;
+			(r1 + 3 + j) % n != r1 && (r1 + 3 + j) % n != r1 + 1;) {
+		if (i != 0 && p1[i] != p2[r1] && p1[i] != p2[r1 + 1]
+				&& p1[i] != p2[r1 + 2]) {
+			if ((r1 + 3 + j) % n) {
+				c2[(r1 + 3 + j) % n] = p1[i];
+				++j;
+			} else {
+				++j;
+				c2[(r1 + 3 + j) % n] = p1[i];
+				++j;
+			}
+		}
+		i = (i + 1) % n;
+	}
+
+	for (int i = r2 + 3, j = 0;
+			(r2 + 3 + j) % n != r2 && (r1 + 3 + j) % n != r1 + 1;) {
+		if (i != 0 && p2[i] != p1[r2] && p2[i] != p1[r2 + 1]
+				&& p2[i] != p1[r2 + 2]) {
+			if ((r2 + 3 + j) % n) {
+				c1[(r2 + 3 + j) % n] = p2[i];
+				++j;
+			} else {
+				++j;
+				c1[(r2 + 3 + j) % n] = p2[i];
+				++j;
+			}
+		}
+		i = (i + 1) % n;
+	}
+
+	c.c2 = c2;
+	c.c1 = c1;
+
+	return c;
+}
+
 individual solve(vector<vector<double>> &map, int n) {
 	int gen = 1;
-	int thres = 100;
+	int thres = 500;
 
 	vector<individual> pop;
 	individual temp;
@@ -127,6 +177,20 @@ individual solve(vector<vector<double>> &map, int n) {
 
 		sort(pop.begin(), pop.end(), lessthan);
 
+		for (int i = 0; i < 5; ++i) {
+			Offspring c;
+			int r1 = rand() % POP_SIZE;
+			int r2 = rand() % POP_SIZE;
+			while (r1 == r2) {
+				r2 = rand() % POP_SIZE;
+			}
+			c = crossover(pop[r1].gene, pop[r2].gene, n);
+			pop[r1].gene = c.c1;
+			pop[r1].fitness = find_fitness(c.c1, map);
+			pop[r2].gene = c.c2;
+			pop[r2].fitness = find_fitness(c.c2, map);
+		}
+
 		for (int i = 0; i < POP_SIZE; i++) {
 			individual p1 = pop[i];
 
@@ -142,8 +206,7 @@ individual solve(vector<vector<double>> &map, int n) {
 				if (new_gene.fitness <= pop[i].fitness) {
 					pop[i] = new_gene;
 					break;
-				}
-				else if (cnt > 40) {
+				} else if (cnt > 40) {
 					break;
 				}
 				++cnt;
@@ -153,6 +216,8 @@ individual solve(vector<vector<double>> &map, int n) {
 		gen++;
 	}
 
+	sort(pop.begin(), pop.end(), lessthan);
+
 	return pop[0];
 
 }
@@ -160,7 +225,7 @@ individual solve(vector<vector<double>> &map, int n) {
 int main() {
 	srand(time(NULL));
 
-	FILE *fp = fopen("./tsp_data/tsp_100_5", "r"); //normal input will work until 399, after 400 scientific notation
+	FILE *fp = fopen("./tsp_data/tsp_100_1", "r"); //normal input will work until 399, after 400 scientific notation
 	fread(ibuff, 1, insz, fp);
 	char *ip = ibuff;
 	int n = get_number(ip);
@@ -197,6 +262,8 @@ int main() {
 	}
 
 	cout << "ANSWER: " << sum << endl;
+
 	fclose(fp);
 	return 0;
 }
+
