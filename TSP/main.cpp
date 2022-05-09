@@ -3,33 +3,15 @@
 #include <cmath>
 #include <string>
 #include <ctime>
+#include <fstream>
+#include <sstream>
 
 #define POP_SIZE 1
+#define THRESH 10000
+#define MAX_POP 5
+#define MAX_CNT 100
 
 using namespace std;
-const int maxN = 1e5;
-const int insz = 7 + maxN * 19;
-char ibuff[insz];
-
-void skip_d(char *&p) {
-	while (*p <= ' ')
-		++p;
-}
-
-double get_number(char *&p) {
-	while (*p <= ' ')
-		++p;
-
-	double num = 0;
-	while (*p >= '0' && *p <= '9') {
-		num *= 10;
-		num += *p - '0';
-		++p;
-	}
-	return num;
-}
-
-/////
 
 class individual {
 public:
@@ -103,8 +85,6 @@ vector<int> change_ribs(vector<int> gene, int n) {
 			break;
 	}
 
-	//cout << "A: " << A << ", B: " << B << endl;
-
 	vector<int> new_gene;
 	new_gene = gene;
 	new_gene[A + 1] = gene[B];
@@ -113,17 +93,6 @@ vector<int> change_ribs(vector<int> gene, int n) {
 		new_gene[A + 1 + i] = gene[B - i];
 		++i;
 	}
-	/*
-	 cout << "GENE: ";
-	 for (int c: gene)
-	 cout << c << ' ';
-	 cout << endl;
-	 cout << "NEW GENE: ";
-	 for (int c: new_gene)
-	 cout << c << ' ';
-	 cout << endl;
-	 */
-
 	return new_gene;
 }
 
@@ -131,7 +100,7 @@ bool lessthan(struct individual t1, struct individual t2) {
 	return t1.fitness < t2.fitness;
 }
 
-double find_fitness(vector<int> gene, vector<vector<double> > &map) ///???????
+double find_fitness(vector<int> gene, vector<vector<double> > &map)
 		{
 	double f = 0;
 	for (int i = 0; i < gene.size() - 1; i++) {
@@ -141,59 +110,34 @@ double find_fitness(vector<int> gene, vector<vector<double> > &map) ///???????
 	}
 	return f;
 }
-/*
- struct Offspring {
- vector<int> c1, c2;
- };
-
- Offspring crossover(vector<int> p1, vector<int> p2, int n) {
- vector<int> c1, c2;
- Offspring c;
- c2 = p2;
- c1 = p1;
-
- int i = 0;
-
-
-
- c.c2 = c2;
- c.c1 = c1;
-
- return c;
- }
- */
 
 individual solve(vector<vector<double> > &map, int n) {
 	int gen = 1;
-	int thres = 500;
 
 	vector<individual> pop;
 	individual temp;
 
-	/*
-	 for (int i = 0; i < POP_SIZE; i++) {
-	 temp.gene = generate_gene(n);
-	 temp.fitness = find_fitness(temp.gene, map);
-	 pop.push_back(temp);
-	 }
-	 */
-
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < POP_SIZE; i++) {
+		cout << "Generating gene number: " << i << "/10\n";
 		temp.gene = generate_gene(n);
 		temp.fitness = find_fitness(temp.gene, map);
 		pop.push_back(temp);
 	}
 
-	while (gen <= thres) {
+	cout << "Created initial population\n";
 
-		cout << "Current gen: " << gen << endl;
+	while (gen <= THRESH) {
+		if (gen % 1000 == 0)
+			cout << "Current gen: " << gen << endl;
 
 		sort(pop.begin(), pop.end(), lessthan);
-		while (pop.size() >= 200) {
+		while (pop.size() >= MAX_POP) {
 			pop.erase(pop.begin() + (pop.size() / 2), pop.end());
 		}
-
-		cout << "Pop size: " << pop.size() << endl;
+		if (gen % 1000 == 0) {
+			cout << "Pop size: " << pop.size() << endl;
+			cout << "Best fitness: " << pop[0].fitness << endl;
+		}
 
 		for (int i = 0; i < pop.size(); i++) {
 			individual p1 = pop[i];
@@ -202,7 +146,6 @@ individual solve(vector<vector<double> > &map, int n) {
 			while (true) {
 
 				vector<int> new_g;
-				//new_g = mutate_gene(p1.gene, n, 1);
 				new_g = change_ribs(p1.gene, n);
 				individual new_gene;
 				new_gene.gene = new_g;
@@ -211,20 +154,10 @@ individual solve(vector<vector<double> > &map, int n) {
 				if (new_gene.fitness <= pop[i].fitness) {
 					pop[i] = new_gene;
 					break;
-				} else if (cnt > 200) {
-
-					temp.gene = mutate_gene(new_gene.gene, n, rand() % 20 + 5);
+				} else if (cnt > MAX_CNT) {
+					temp.gene = mutate_gene(new_gene.gene, n, rand() % 100 + 5);
 					temp.fitness = find_fitness(temp.gene, map);
 					pop.push_back(temp);
-
-					/*
-					 temp.gene = mutate_gene(new_gene.gene, n, rand()%10 + 10);
-					 temp.fitness = find_fitness(temp.gene, map);
-					 pop.push_back(temp);
-					 */
-					//new_gene.gene = mutate_gene(p1.gene, n, 10);
-					//new_gene.fitness = find_fitness(new_gene.gene, map);
-					//pop[i] = new_gene;
 					break;
 				}
 				++cnt;
@@ -241,22 +174,34 @@ individual solve(vector<vector<double> > &map, int n) {
 }
 
 int main() {
-	srand(time(NULL));
+	//srand(time(NULL));
+	string s1, s2;
+	ifstream File;
 
-	FILE *fp = fopen("./tsp_data/tsp_100_1", "r"); //normal input will work until 399, after 400 scientific notation
-	fread(ibuff, 1, insz, fp);
-	char *ip = ibuff;
-	int n = get_number(ip);
+	string name;
+	cout << "File name:\n";
+	cin >> name;
+	//name = "./tsp_data/" + name;
+
+	File.open("./tsp_data/" + name);
+	File >> s1;
+	istringstream os(s1);
+	int n;
+	os >> n;
 
 	vector<double> x(n);
 	vector<double> y(n);
 
+	double d;
 	for (int i = 0; i < n; ++i) {
-		int t;
-		t = get_number(ip);
-		x[i] = t;
-		t = get_number(ip);
-		y[i] = t;
+		File >> s1 >> s2;
+		istringstream os1(s1);
+		os1 >> d;
+		x[i] = d;
+
+		istringstream os2(s2);
+		os2 >> d;
+		y[i] = d;
 	}
 
 	cout << "Calculating distances...\n";
@@ -281,9 +226,17 @@ int main() {
 		sum += sqrt(temp);
 	}
 
+	cout << endl;
+	cout << "POP_SIZE = " << POP_SIZE << endl;
+	cout << "THRESH = " << THRESH << endl;
+	cout << "MAX_POP = " << MAX_POP << endl;
+	cout << "MAX_CNT = " << MAX_CNT << endl;
+
 	cout << "ANSWER: " << sum << endl;
 
-	fclose(fp);
+	cout << name << endl;
+
+	File.close();
 	return 0;
 }
 
