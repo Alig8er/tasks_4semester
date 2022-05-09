@@ -4,7 +4,7 @@
 #include <string>
 #include <ctime>
 
-#define POP_SIZE 20
+#define POP_SIZE 1
 
 using namespace std;
 const int maxN = 1e5;
@@ -77,9 +77,9 @@ vector<int> generate_gene(int n) {
 	return gene;
 }
 
-vector<int> mutate_gene(vector<int> gene, int n) {
+vector<int> mutate_gene(vector<int> gene, int n, int k) {
 	int cnt = 0;
-	while (cnt < 1) {
+	while (cnt < k) {
 		int r = rand() % (n - 1) + 1;
 		int r1 = rand() % (n - 1) + 1;
 		if (r1 != r) {
@@ -106,7 +106,7 @@ double find_fitness(vector<int> gene, vector<vector<double>> &map) ///???????
 	}
 	return f;
 }
-
+/*
 struct Offspring {
 	vector<int> c1, c2;
 };
@@ -126,10 +126,11 @@ Offspring crossover(vector<int> p1, vector<int> p2, int n) {
 
 	return c;
 }
+*/
 
 individual solve(vector<vector<double>> &map, int n) {
 	int gen = 1;
-	int thres = 2000;
+	int thres = 1000;
 
 	vector<individual> pop;
 	individual temp;
@@ -145,7 +146,11 @@ individual solve(vector<vector<double>> &map, int n) {
 		cout << "Current gen: " << gen << endl;
 
 		sort(pop.begin(), pop.end(), lessthan);
+		while (pop.size() >= 200) {
+			pop.erase (pop.begin() + (pop.size()/2), pop.end());
+		}
 
+		cout << "Pop size: " << pop.size() << endl;
 		/*
 		for (int i = 0; i < 10; ++i) {
 			Offspring c;
@@ -171,14 +176,14 @@ individual solve(vector<vector<double>> &map, int n) {
 		*/
 
 
-		for (int i = 0; i < POP_SIZE; i++) {
+		for (int i = 0; i < pop.size(); i++) {
 			individual p1 = pop[i];
 
 			int cnt = 0;
 			while (true) {
 
 				vector<int> new_g;
-				new_g = mutate_gene(p1.gene, n);
+				new_g = mutate_gene(p1.gene, n, 1);
 				individual new_gene;
 				new_gene.gene = new_g;
 				new_gene.fitness = find_fitness(new_gene.gene, map);
@@ -186,11 +191,23 @@ individual solve(vector<vector<double>> &map, int n) {
 				if (new_gene.fitness <= pop[i].fitness) {
 					pop[i] = new_gene;
 					break;
-				} else if (cnt > 100) {
+				} else if (cnt > 50) {
+
+					temp.gene = mutate_gene(new_gene.gene, n, rand()%10 + 5);
+					temp.fitness = find_fitness(temp.gene, map);
+					pop.push_back(temp);
+
+					/*
+					temp.gene = mutate_gene(new_gene.gene, n, rand()%10 + 10);
+					temp.fitness = find_fitness(temp.gene, map);
+					pop.push_back(temp);
+					*/
+					//new_gene.gene = mutate_gene(p1.gene, n, 10);
+					//new_gene.fitness = find_fitness(new_gene.gene, map);
+					//pop[i] = new_gene;
 					break;
 				}
 				++cnt;
-				//cout << "FAIL: " << cnt << ", i = " << i << endl;
 			}
 		}
 
@@ -204,7 +221,7 @@ individual solve(vector<vector<double>> &map, int n) {
 }
 
 int main() {
-	//srand(time(NULL));
+	srand(time(NULL));
 
 	FILE *fp = fopen("./tsp_data/tsp_100_1", "r"); //normal input will work until 399, after 400 scientific notation
 	fread(ibuff, 1, insz, fp);
