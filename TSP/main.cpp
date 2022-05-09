@@ -92,11 +92,46 @@ vector<int> mutate_gene(vector<int> gene, int n, int k) {
 	return gene;
 }
 
+vector<int> change_ribs(vector<int> gene, int n) {
+	int A, B;
+	while (true) {
+		A = rand() % (n - 2);
+		B = rand() % (n - 2);
+		if (B < A)
+			swap(A, B);
+		if (A + 1 < B)
+			break;
+	}
+
+	//cout << "A: " << A << ", B: " << B << endl;
+
+	vector<int> new_gene;
+	new_gene = gene;
+	new_gene[A + 1] = gene[B];
+	int i = 1;
+	while (B - i > A) {
+		new_gene[A + 1 + i] = gene[B - i];
+		++i;
+	}
+	/*
+	 cout << "GENE: ";
+	 for (int c: gene)
+	 cout << c << ' ';
+	 cout << endl;
+	 cout << "NEW GENE: ";
+	 for (int c: new_gene)
+	 cout << c << ' ';
+	 cout << endl;
+	 */
+
+	return new_gene;
+}
+
 bool lessthan(struct individual t1, struct individual t2) {
 	return t1.fitness < t2.fitness;
 }
 
-double find_fitness(vector<int> gene, vector<vector<double>> &map) ///???????
+double find_fitness(vector<int> gene, vector<vector<double> > &map) ///???????
 		{
 	double f = 0;
 	for (int i = 0; i < gene.size() - 1; i++) {
@@ -107,35 +142,43 @@ double find_fitness(vector<int> gene, vector<vector<double>> &map) ///???????
 	return f;
 }
 /*
-struct Offspring {
-	vector<int> c1, c2;
-};
+ struct Offspring {
+ vector<int> c1, c2;
+ };
 
-Offspring crossover(vector<int> p1, vector<int> p2, int n) {
-	vector<int> c1, c2;
-	Offspring c;
-	c2 = p2;
-	c1 = p1;
+ Offspring crossover(vector<int> p1, vector<int> p2, int n) {
+ vector<int> c1, c2;
+ Offspring c;
+ c2 = p2;
+ c1 = p1;
 
-	int i = 0;
+ int i = 0;
 
 
 
-	c.c2 = c2;
-	c.c1 = c1;
+ c.c2 = c2;
+ c.c1 = c1;
 
-	return c;
-}
-*/
+ return c;
+ }
+ */
 
-individual solve(vector<vector<double>> &map, int n) {
+individual solve(vector<vector<double> > &map, int n) {
 	int gen = 1;
-	int thres = 1000;
+	int thres = 500;
 
 	vector<individual> pop;
 	individual temp;
 
-	for (int i = 0; i < POP_SIZE; i++) {
+	/*
+	 for (int i = 0; i < POP_SIZE; i++) {
+	 temp.gene = generate_gene(n);
+	 temp.fitness = find_fitness(temp.gene, map);
+	 pop.push_back(temp);
+	 }
+	 */
+
+	for (int i = 0; i < 10; i++) {
 		temp.gene = generate_gene(n);
 		temp.fitness = find_fitness(temp.gene, map);
 		pop.push_back(temp);
@@ -147,34 +190,10 @@ individual solve(vector<vector<double>> &map, int n) {
 
 		sort(pop.begin(), pop.end(), lessthan);
 		while (pop.size() >= 200) {
-			pop.erase (pop.begin() + (pop.size()/2), pop.end());
+			pop.erase(pop.begin() + (pop.size() / 2), pop.end());
 		}
 
 		cout << "Pop size: " << pop.size() << endl;
-		/*
-		for (int i = 0; i < 10; ++i) {
-			Offspring c;
-			int r1 = rand() % POP_SIZE;
-			int r2 = rand() % POP_SIZE;
-			while (r1 == r2) {
-				r2 = rand() % POP_SIZE;
-			}
-			c = crossover(pop[r1].gene, pop[r2].gene, n);
-			individual new_gene;
-			new_gene.gene = c.c1;
-			new_gene.fitness = find_fitness(c.c1, map);
-			if (new_gene.fitness <= pop[r1].fitness){
-				pop[r1]= new_gene;
-			}
-
-			new_gene.gene = c.c2;
-			new_gene.fitness = find_fitness(c.c2, map);
-			if (new_gene.fitness <= pop[r2].fitness){
-				pop[r2]= new_gene;
-			}
-		}
-		*/
-
 
 		for (int i = 0; i < pop.size(); i++) {
 			individual p1 = pop[i];
@@ -183,7 +202,8 @@ individual solve(vector<vector<double>> &map, int n) {
 			while (true) {
 
 				vector<int> new_g;
-				new_g = mutate_gene(p1.gene, n, 1);
+				//new_g = mutate_gene(p1.gene, n, 1);
+				new_g = change_ribs(p1.gene, n);
 				individual new_gene;
 				new_gene.gene = new_g;
 				new_gene.fitness = find_fitness(new_gene.gene, map);
@@ -191,17 +211,17 @@ individual solve(vector<vector<double>> &map, int n) {
 				if (new_gene.fitness <= pop[i].fitness) {
 					pop[i] = new_gene;
 					break;
-				} else if (cnt > 50) {
+				} else if (cnt > 200) {
 
-					temp.gene = mutate_gene(new_gene.gene, n, rand()%10 + 5);
+					temp.gene = mutate_gene(new_gene.gene, n, rand() % 20 + 5);
 					temp.fitness = find_fitness(temp.gene, map);
 					pop.push_back(temp);
 
 					/*
-					temp.gene = mutate_gene(new_gene.gene, n, rand()%10 + 10);
-					temp.fitness = find_fitness(temp.gene, map);
-					pop.push_back(temp);
-					*/
+					 temp.gene = mutate_gene(new_gene.gene, n, rand()%10 + 10);
+					 temp.fitness = find_fitness(temp.gene, map);
+					 pop.push_back(temp);
+					 */
 					//new_gene.gene = mutate_gene(p1.gene, n, 10);
 					//new_gene.fitness = find_fitness(new_gene.gene, map);
 					//pop[i] = new_gene;
@@ -240,7 +260,7 @@ int main() {
 	}
 
 	cout << "Calculating distances...\n";
-	vector<vector<double>> map(n, vector<double>(n, 0)); //contains SQUARED distances
+	vector<vector<double> > map(n, vector<double>(n, 0)); //contains SQUARED distances
 	for (int i = 0; i < n; ++i) {
 		if (!(i % 100))
 			cout << "Row: " << i << endl;
