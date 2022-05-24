@@ -6,27 +6,6 @@
 #include <sstream>
 
 using namespace std;
-const int maxN = 1e5;
-const int insz = 7 + maxN * 19;
-char ibuff[insz];
-
-void skip_d(char *&p) {
-	while (*p <= ' ')
-		++p;
-}
-
-int get_number(char *&p) {
-	while (*p <= ' ')
-		++p;
-
-	int num = 0;
-	while (*p >= '0' && *p <= '9') {
-		num *= 10;
-		num += *p - '0';
-		++p;
-	}
-	return num;
-}
 
 void addEdge(vector<int> adj[], int v, int u) {
 	adj[u].push_back(v);
@@ -88,23 +67,36 @@ void find_colors(int V, vector<int> adj[]) {
 }
 
 int main() {
-	FILE *fp = fopen("./data/gc_1000_1", "r");
-	fread(ibuff, 1, insz, fp);
-	char *ip = ibuff;
-	int V = get_number(ip); // num of vert
-	int E = get_number(ip); //num of edges
+	string s1, s2;
+	ifstream File;
 
+	int V, E;
+
+	string name;
+	cout << "File number:\n";
+	cin >> name;
+
+	File.open("./data/gc_" + name);
+	File >> s1 >> s2;
+	istringstream os1(s1);
+	os1 >> V;
+
+	istringstream os2(s2);
+	os2 >> E;
 
 	vector<int> adj[V];
 
 	for (int i = 0; i < E; ++i) {
 		int e1, e2;
-		e1 = get_number(ip);
-		e2 = get_number(ip);
+		File >> s1 >> s2;
+		istringstream os3(s1);
+		os3 >> e1;
+		istringstream os4(s2);
+		os4 >> e2;
 		addEdge(adj, e1, e2);
 	}
 
-	fclose(fp);
+	File.close();
 
 	find_colors(V,adj);
 
