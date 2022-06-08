@@ -12,6 +12,8 @@ using namespace std;
 #include "ortools/constraint_solver/routing_index_manager.h"
 #include "ortools/constraint_solver/routing_parameters.h"
 
+const int AJ = 1000000;
+
 namespace operations_research {
 struct DataModel {
 	std::vector<std::vector<double> > distance_matrix;
@@ -44,7 +46,7 @@ void PrintSolution(const DataModel &data, const RoutingIndexManager &manager,
 		total_distance += route_distance;
 		total_load += route_load;
 	}
-	LOG(INFO) << "Total distance of all routes: " << total_distance << "m";
+	LOG(INFO) << "Total distance of all routes: " << total_distance/AJ << "m";
 }
 
 void VrpCapacity(DataModel& data) {
@@ -81,7 +83,7 @@ void VrpCapacity(DataModel& data) {
 			FirstSolutionStrategy::PATH_CHEAPEST_ARC);
 	search_parameters.set_local_search_metaheuristic(
 			LocalSearchMetaheuristic::GUIDED_LOCAL_SEARCH);
-	search_parameters.mutable_time_limit()->set_seconds(500);
+	search_parameters.mutable_time_limit()->set_seconds(2);
 
 	const Assignment *solution = routing.SolveWithParameters(search_parameters);
 
@@ -90,7 +92,6 @@ void VrpCapacity(DataModel& data) {
 }
 
 int main(int argc, char **argv) {
-
 	std::string s1, s2, s3;
 	std::ifstream File;
 	int N, V;
@@ -128,7 +129,7 @@ int main(int argc, char **argv) {
 	vector<vector<double> > map(N, vector<double>(N, 0));
 	for (int i = 0; i < N; ++i) {
 		for (int j = i + 1; j < N; ++j) {
-			map[i][j] = map[j][i] = sqrt(pow(X[i] - X[j], 2) + pow(Y[i] - Y[j], 2));
+			map[i][j] = map[j][i] = AJ*sqrt(pow(X[i] - X[j], 2) + pow(Y[i] - Y[j], 2));
 		}
 	}
 	cout << "Finished calculating distances.\n";
