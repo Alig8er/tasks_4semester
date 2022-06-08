@@ -12,7 +12,7 @@ using namespace std;
 #include "ortools/constraint_solver/routing_index_manager.h"
 #include "ortools/constraint_solver/routing_parameters.h"
 
-const int AJ = 1000000;
+const int AJ = 100;
 
 namespace operations_research {
 struct DataModel {
@@ -83,7 +83,7 @@ void VrpCapacity(DataModel& data) {
 			FirstSolutionStrategy::PATH_CHEAPEST_ARC);
 	search_parameters.set_local_search_metaheuristic(
 			LocalSearchMetaheuristic::GUIDED_LOCAL_SEARCH);
-	search_parameters.mutable_time_limit()->set_seconds(2);
+	search_parameters.mutable_time_limit()->set_seconds(1200);
 
 	const Assignment *solution = routing.SolveWithParameters(search_parameters);
 
